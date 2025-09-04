@@ -59,9 +59,11 @@ RK3588部署推理 + 量化
 
 <img width="1423" height="685" alt="image" src="https://github.com/user-attachments/assets/0aaa91c2-01e9-44de-bc53-55087d526291" />
 
-实验一： 他是XFOCS对比，我用RTDETR对比，模型可以选择类似的，实验多做一点。 数据集可以选用COCO 或者红外数据集HIT
-实验二： 使用图像匹配算法 Xfeat ,改进 找对比  数据集就用大钊的
-实验三： 将上面两个模型量化部署到RK3588上进行推理
+实验一： 他是XFOCS对比，我用RTDETR对比，模型可以选择类似的，实验多做一点。 数据集可以选用COCO 或者红外数据集HIT  RTDETR改进一个剪枝  + 一个改进backbone的自研模块 + 一个检测头P2
+
+实验二： 使用图像匹配算法 Xfeat ,改进 找对比  数据集就用大钊的  xfeat 改进 注意力 损失函数 or 加一个模块？
+
+实验三： 将上面两个模型量化部署到RK3588上进行推理  两个模型量化int8 转化为RKNN推理
 
 ## 4、rtdetr模型剪枝
 
