@@ -9,7 +9,6 @@
           2. SER模块 + transformer检测头
           
   大论文写作流程：研究背景与意义 国内外研究现状 论文研究内容与组织框架 深度学习理论基础 基于CNN的目标检测算法  基于Transformer 的目标检测算法 目标检测常用指标 baseline模型介绍 注意路介绍 数据集与指标 对比实验 消融实验 总结与展望 参考文献
-  <img width="852" height="723" alt="image" src="https://github.com/user-attachments/assets/4ad280af-3b0b-4aa7-b79f-85f83f1e3802" />
 
 点评：论文格式好看，可以参考，但是内容较少，相关工作偏基础。
 
@@ -45,6 +44,9 @@ RK3588部署推理 + 量化
 完成
 
 # 9.4
+
+简历知识点：C++多态、STL库的底层结构、ARM、RISC-V架构、FreeRTOS移植、任务管理、任务切换、时间管理机制、Git、U-boot移植操作、字符设备驱动框架、PCIE驱动框架、QT底层、手写 Linux 字符设备驱动、ModBus TCP 功能码 ModBus 、RTU 、RS485 、 LWIP 协议栈、FatFs 文件系统、IAP 远程升级
+
 
 ## 1、pcie驱动框架
 
