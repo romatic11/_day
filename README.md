@@ -82,9 +82,25 @@ RK3588部署推理 + 量化
 
 RTDETR--prune  + 数据集选择
 
+
 复习计算机操作系统
 
 一个驱动框架
+
+
+# 9.11
+
+简历梳理：
+
+C/C++: 内存对齐、内存泄漏、malloc/new、野指针、栈和堆、虚函数作用、继承和多态、动态绑定
+
+C11:引入aoto、智能指针、lambda表达式、范围for
+
+STL: vector(push_back)、list、set(红黑树)、map（红黑树）、unorder_map（哈希表）
+
+ARM 与 RISC-V：都是RISC架构（精简指令集，一个开源一个收费
+
+外设：uart IIC spi DMA ADC can
 
 
 
