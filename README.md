@@ -183,7 +183,7 @@ ARM 与 RISC-V：都是RISC架构（精简指令集，一个开源一个收费
 
 面经解决：
 
-unsigned int char  unsigned char p:2  字节数   int* f(int a*, int  b*)  int arr[]= {2,3,4,5}   int *p = (int *) (&arr + 2)  
+unsigned int char  unsigned char p:2  字节数   int* f(int* a, int* b)  int arr[]= {2,3,4,5}   int *p = (int *) (&arr + 2)  
 
 单片机的启动方式：
 
