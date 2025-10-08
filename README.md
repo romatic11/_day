@@ -533,14 +533,14 @@ memuconfig还是深度裁剪  先用 menuconfig 进行初步裁剪，再做深�
 裁剪内核的目的 裁剪掉哪些外设  即不能起到节省空间的作用、
 
 我想人为制造一个死锁，有什么方法？具体怎么做？最少代码实现？函数有没有？死锁是怎么产生的？什么原理？ 
-`#include <stdio.h>
-#include <pthread.h>
-#include <unistd.h>
+`   #include <stdio.h>
+    #include <pthread.h>
+    #include <unistd.h>
 
-pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;
+    pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;
 
-void *thread_a(void *arg) {
+    void *thread_a(void *arg) {
     pthread_mutex_lock(&m1);
     printf("Thread A: locked m1\n");
     sleep(1); // 确保 B 有机会锁住 m2
@@ -550,9 +550,9 @@ void *thread_a(void *arg) {
     pthread_mutex_unlock(&m2);
     pthread_mutex_unlock(&m1);
     return NULL;
-}
+    }
 
-void *thread_b(void *arg) {
+    void *thread_b(void *arg) {
     pthread_mutex_lock(&m2);
     printf("Thread B: locked m2\n");
     sleep(1); // 确保 A 已锁 m1
@@ -562,9 +562,9 @@ void *thread_b(void *arg) {
     pthread_mutex_unlock(&m1);
     pthread_mutex_unlock(&m2);
     return NULL;
-}
+    }
 
-int main(void) {
+    int main(void) {
     pthread_t a, b;
     pthread_create(&a, NULL, thread_a, NULL);
     pthread_create(&b, NULL, thread_b, NULL);
@@ -572,8 +572,10 @@ int main(void) {
     pthread_join(b, NULL);
     printf("Both threads finished (this line will not be reached if deadlock occurs)\n");
     return 0;
-}
-`A 锁住 m1 并等待 m2；B 锁住 m2 并等待 m1 → 形成循环等待，故两个线程都无法继续执行 → 死锁。
+    }
+`
+
+A 锁住 m1 并等待 m2；B 锁住 m2 并等待 m1 → 形成循环等待，故两个线程都无法继续执行 → 死锁。
 
 应该先知道什么场景下会发生锁才能知道什么场景下该用锁？ 多线程/多进程同时访问共享数据 多线程访问临界区
 
