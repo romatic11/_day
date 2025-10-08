@@ -420,84 +420,180 @@ Linux网络驱动（net_device） 网口调试
 
 IIC SPI驱动
 
-Linux内核态下的同步机制和内核锁的机制 你知道哪些？
+Linux内核态下的同步机制和内核锁的机制 你知道哪些？（原子操作、自旋锁、互斥锁、读写锁、信号量）
 
 你知道的有哪些锁？具有有使用过吗
 
-在中断里面用锁应该用什么样的锁？（有个资源我想要保护它用什么锁）
+在中断里面用锁应该用什么样的锁？（有个资源我想要保护它用什么锁）中断上下文严禁睡眠  （在中断处理程序里面，保护共享资源的锁必须使用自旋锁 (Spinlock)）spin_lock_irqsave
 
-中断一般分几步？
+中断一般分几步？（硬件收到中断信号----保存当前寄存器和PC等上下文-----跳转到中断入口------执行中断函数-----恢复上下文）
 
-中断回调函数需要执行一个长时间的任务如何做？   来了一个中断后执行一个耗时比较长的任务该如何做？
+中断回调函数需要执行一个长时间的任务如何做？   来了一个中断后执行一个耗时比较长的任务该如何做？（中断上半部分及时响应，不可睡眠，下半部分可以处理耗时比较长的任务）使用工作队列 (Workqueue)
 
-ioctrl有哪些类型（在权限方面）？
+ioctl有哪些类型（在权限方面）？四种类型（只执行、只读、只写、读写）_IO   _IOR _IOW _IOWR
 
-一个通用的Linux设备从上电到启动有哪些过程？
+一个通用的Linux设备从上电到启动有哪些过程？  一个 Linux 设备从上电到启动的过程包括：
+1️⃣ BootLoader 加载内核；
+2️⃣ 内核初始化硬件与驱动模型；
+3️⃣ 驱动匹配并注册设备；
+4️⃣ udev 创建设备节点；
+5️⃣ 用户空间应用通过 /dev 或 sysfs 使用设备。
 
-uboot里面加载内核的方法是如何加载的？ 加载的命令是哪些？ boot启动的内核镜像格式是怎么样的？ 
+uboot里面加载内核的方法是如何加载的？ 加载的命令是哪些？ boot启动的内核镜像格式是怎么样的？
+[上电] 
+   ↓
+[BootROM 启动]
+   ↓
+[U-Boot (二级引导器)]
+   ↓
+[加载内核镜像 + 设备树 + 根文件系统]
+   ↓
+[跳转执行内核入口 (bootm/bootz)]
 
-uimage 与 zimage的区别？
+`=> setenv bootargs 'console=ttyS0,115200 root=/dev/mmcblk0p2 rw rootwait'
+=> fatload mmc 0:1 0x82000000 uImage         # 加载内核镜像到内存 0x82000000
+=> fatload mmc 0:1 0x83000000 myboard.dtb    # 加载设备树
+=> bootm 0x82000000 - 0x83000000             # 启动内核 (uImage)`
 
-内核里面创建多线程的方式？（用哪些接口，创建多线程的接口） 比如正常一个进程，init mod后 probe后完， 退出了就不干活了？ 如何在后台循环着做？
+把内核镜像、设备树 (DTB) 和 initramfs 放到内存指定地址，然后跳转到内核入口点。
 
-应用层的多线程？（如何做）接口，接口函数具体在哪些库如何实现的？
+uimage 与 zimage的区别？       uImage (U-Boot 封装格式)     zImage (Linux 原始压缩镜像)后期内核直接支持
 
-系统上有非常多的线程，ABCDEFG，Linux如何决定让哪个线程先运行多跑一点哪个后运行？
+uImage 是什么？  uImage = U-Boot header + zImage    是在 zImage 外 加了一个 U-Boot 头部 的封装文件；  使用 mkimage 工具生成；这个头部包含：镜像类型（内核、ramdisk、脚本等）  
+架构类型（ARM/MIPS...）压缩格式（gzip, none, etc.）加载地址、入口地址校验和 (CRC)镜像名/描述字符串
+
+bootm（启动 uImage 格式）  bootz（启动 zImage 格式）
+
+内核里面创建多线程的方式？（用哪些接口，创建多线程的接口） 比如正常一个进程，init mod后 probe后完， 退出了就不干活了？ 如何在后台循环着做？内核线程 (kthread)✅ 工作队列 (workqueue)✅ 定时器 (timer)
+
+最典型、最常用的后台机制就是：内核线程 kthread。内核提供了一组 kthread API，
+
+
+应用层的多线程？（如何做）接口，接口函数具体在哪些库如何实现的？POSIX Threads  Pthreads
+
+系统上有非常多的线程，ABCDEFG，Linux如何决定让哪个线程先运行多跑一点哪个后运行？调度器默认使用 CFS  CFS 目标：尽可能公平地让每个线程占用 CPU 时间  CFS 公平调度：虚拟运行时间小的先跑，优先级高的跑得多。
+实时调度：优先级高的先跑，不看公平，低优先级线程抢不到 CPU。
 
 Linux调度相关的？
 
 线程之间的优先级
 
-单片机为什么不用担心有死循环导致资源耗尽的问题呢？在Linux上就会有问题呢
+单片机为什么不用担心有死循环导致资源耗尽的问题呢？在Linux上就会有问题呢   
+
+单片机中死循环只是 CPU 占用 100%，不会分配额外内存或文件句柄，不会引发“资源耗尽”问题。很多嵌入式系统不使用 malloc/free 或很少使用。不存在内存泄漏风险 → 死循环不影响有限的 RAM。不存在锁等待、信号量阻塞导致的死锁问题。系统没有多进程、多线程竞争 CPU，死循环不会阻塞其他线程。
+
+Linux 内核会追踪资源，如果多个死循环进程同时运行，可能导致系统资源枯竭。单片机资源有限且静态可控；Linux 资源动态、任务复杂、调度抢占，死循环可能导致系统不可用。
 
 比如一个洗衣机，我写了一个死循环，如果是看门狗每隔一段时间就重启一次，好像不合理。
 
 把一个字符转化成一个数字
 
-把一串字符和数字混杂的字符串，把数字分别提取出来，用什么方法？
+把一串字符和数字混杂的字符串，把数字分别提取出来，用什么方法？isdigit可以判断是不是数字字符
 
-Linux信号有没有用过？有哪些信号
+Linux信号有没有用过？有哪些信号    信号是 Linux/UNIX 内核向进程发送的一种异步通知机制。    不同系统信号编号可能略有不同，使用宏更安全
 
-我需要客户输出ctrl+c的时候，我不要求我的进程挂起来，我不要求进程退出有什么办法？如何屏蔽信号
+SIGHUP	1	终止	终端挂起或连接断开
 
-在C语言的时候有没有用过void类型的指针？取值的时候要注意什么
+SIGINT	2	终止	Ctrl+C 中断
 
-如何定义一个函数指针具体 （假如一个函数指针有三个int的参数，完整说出来）
+SIGQUIT	3	终止 + core	Ctrl+\，生成 core dump
 
-C语言的do while有什么好处？什么时候适合用这个函数
+SIGILL	4	终止 + core	非法指令
 
-全局变量如果如局部变量重名了，会发生什么。你应该注意什么
+SIGABRT	6	终止 + core	调用 abort()
 
-我需要实现字符串的复制有哪些方法
+我需要客户输出ctrl+c的时候，我不要求我的进程挂起来，我不要求进程退出有什么办法？如何屏蔽信号   最简单的方式是将 SIGINT 设为 SIG_IGN（ignore）：
 
-格式化输出的函数有没有用过
+在C语言的时候有没有用过void类型的指针？取值的时候要注意什么     void* 可以指向任意类型；解引用前 必须类型转换；适合通用接口和内存操作，但要注意类型安全。
 
-fork和vfork这两个创建的子进程有什么区别？
+如何定义一个函数指针具体 （假如一个函数指针有三个int的参数，完整说出来）  int (*func_ptr)(int, int, int);
+
+C语言的do while有什么好处？什么时候适合用这个函数   无论条件是否为真，循环体都会执行一次   菜单至少显示一次，用户才有机会输入。
+
+全局变量如果如局部变量重名了，会发生什么。你应该注意什么  局部变量“屏蔽”全局变量
+
+我需要实现字符串的复制有哪些方法  strcpy包括 \0 结束符。   strncpy需要手动添加 \0。
+
+格式化输出的函数有没有用过 printf("整数: %d\n", a);    printf("浮点数: %.2f\n", b);    printf("字符: %c\n", c);   printf("字符串: %s\n", str);
+
+fork和vfork这两个创建的子进程有什么区别？  fork()  创建一个 几乎完全独立的子进程，父子进程分别拥有自己的地址空间    vfork() 创建子进程，但共享父进程的地址空间，用于立即调用 exec() 的场景，效率更高
 
 硬件接口熟悉哪些？uart SPI IIC 
 
-IIC理论上总线最多挂多少个从设备
+IIC理论上总线最多挂多少个从设备 7 位地址  约 112 个从设备     10 位地址   接近 1024 个从设备
+ 
+IIC协议有哪些信号  主设备生成 START。    发送 7/10 位从设备地址 + R/W 位  从设备返回 ACK    数据字节传输      每字节后从设备返回 ACK     最后生成 STOP
 
-IIC协议有哪些信号
-
-IIC为什么要上拉
+IIC为什么要上拉  I²C 上拉是因为开漏结构无法拉高电平，需要上拉电阻提供逻辑 1，同时保证总线逻辑正确和可靠通信。
 
 内核打交道做了什么事情？
-
-memuconfig还是深度裁剪
+ 
+memuconfig还是深度裁剪  先用 menuconfig 进行初步裁剪，再做深度裁剪，效果和安全性兼顾  一般嵌入式开发 / Linux 定制 → 使用 menuconfig    快速配置驱动、文件系统、模块  保证依赖关系正确  资源极限 / 高度裁剪 → 深度裁剪  手动去掉所有不必要功能   适合小型 MCU、超轻量系统
 
 裁剪内核的目的 裁剪掉哪些外设  即不能起到节省空间的作用、
 
-我想人为制造一个死锁，有什么方法？具体怎么做？最少代码实现？函数有没有？死锁是怎么产生的？什么原理？
+我想人为制造一个死锁，有什么方法？具体怎么做？最少代码实现？函数有没有？死锁是怎么产生的？什么原理？ 
+`#include <stdio.h>
+#include <pthread.h>
+#include <unistd.h>
 
-应该先知道什么场景下会发生锁才能知道什么场景下该用锁？
+pthread_mutex_t m1 = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t m2 = PTHREAD_MUTEX_INITIALIZER;
 
-用锁的时候如何确保不会发生死锁？
+void *thread_a(void *arg) {
+    pthread_mutex_lock(&m1);
+    printf("Thread A: locked m1\n");
+    sleep(1); // 确保 B 有机会锁住 m2
+    printf("Thread A: trying to lock m2\n");
+    pthread_mutex_lock(&m2); // 在这里阻塞（如果 B 已锁 m2）
+    printf("Thread A: locked m2\n");
+    pthread_mutex_unlock(&m2);
+    pthread_mutex_unlock(&m1);
+    return NULL;
+}
+
+void *thread_b(void *arg) {
+    pthread_mutex_lock(&m2);
+    printf("Thread B: locked m2\n");
+    sleep(1); // 确保 A 已锁 m1
+    printf("Thread B: trying to lock m1\n");
+    pthread_mutex_lock(&m1); // 在这里阻塞（如果 A 已锁 m1）
+    printf("Thread B: locked m1\n");
+    pthread_mutex_unlock(&m1);
+    pthread_mutex_unlock(&m2);
+    return NULL;
+}
+
+int main(void) {
+    pthread_t a, b;
+    pthread_create(&a, NULL, thread_a, NULL);
+    pthread_create(&b, NULL, thread_b, NULL);
+    pthread_join(a, NULL);
+    pthread_join(b, NULL);
+    printf("Both threads finished (this line will not be reached if deadlock occurs)\n");
+    return 0;
+}
+`A 锁住 m1 并等待 m2；B 锁住 m2 并等待 m1 → 形成循环等待，故两个线程都无法继续执行 → 死锁。
+
+应该先知道什么场景下会发生锁才能知道什么场景下该用锁？ 多线程/多进程同时访问共享数据 多线程访问临界区
+
+用锁的时候如何确保不会发生死锁？ 多个线程访问同一组资源时，所有线程按同一顺序加锁  使用可中断锁 / **超时锁**
 
 socket编程是本地还是TCP/UDP的？TCP客户端connect的时候会做哪些操作？协议上会有哪些交互？connect会有哪些报文产生？有没有抓过网络包，这个应该知道啊？
 
+本地进程间通信（IPC）  connect() 是 系统调用，背后涉及以下步骤:1 检查 socket 是否有效  2 创建本地四元组TCP 连接需要 (src_ip, src_port, dst_ip, dst_port) 唯一标识 如果客户端未 bind，本地随机选择一个未占用的端口  3 状态机进入 SYN-SENT发送连接请求  4 发送 SYN 报文 5 等待服务器响应 6 接收 SYN-ACK / 完成三次握手
 
+第一步：客户端发送 SYN → 进入 SYN-SENT
 
+第二步：服务器收到 SYN，回复 SYN+ACK → 服务器进入 SYN-RECEIVED
+
+第三步：客户端收到 SYN+ACK，发送 ACK → 双方进入 ESTABLISHED
+
+如何检测死锁（调试/观察方法）    观察程序挂起：主线程或两个线程都 blocked，打印不再继续。
+
+使用 gdb（attach 到进程）查看线程栈：info threads / thread apply all bt，会看到线程都在 pthread_mutex_lock 内等待。
+
+使用 ps / top：发现 CPU 占用低且进程不退出。
 
 
 
